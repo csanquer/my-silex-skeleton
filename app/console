@@ -1,0 +1,28 @@
+#!/usr/bin/env php
+<?php
+
+// get environment constants or set default
+if (!defined('DS')) {
+    define('DS', DIRECTORY_SEPARATOR);
+}
+
+set_time_limit(0);
+
+require_once __DIR__.DS.'..'.DS.'vendor'.DS.'autoload.php';
+
+use Symfony\Component\Console\Input\ArgvInput;
+
+$input = new ArgvInput();
+define('SILEX_ENV', $input->getParameterOption(array('--env', '-e'), getenv('SYMFONY_ENV') ?: 'dev'));
+define('SILEX_DEBUG', !$input->hasParameterOption(array('--no-debug')));
+
+/**
+ * @var \Silex\Application Silex application
+ */
+$app = require_once __DIR__.DS.'bootstrap_app.php';
+
+/**
+ * @var \Symfony\Component\Console\Application Console application
+ */
+$console = require __DIR__.DS.'bootstrap_console.php';
+$console->run();

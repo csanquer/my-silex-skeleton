@@ -1,0 +1,27 @@
+# For performace reasons prefe using config.php
+doctrine:
+    driver: pdo_mysql
+    host: localhost
+    port: 3306
+    dbname: silex_sandbox
+    user: root
+    password:
+
+swiftmailer:
+    transport: sendmail
+    options:
+        host:
+        port:
+        username:
+        password:
+        encryption:
+        auth_mode:
+
+locale_fallback: fr
+
+twig:
+    variables:
+        foo: bar
+
+umask: 0000
+cache_access: 0777
