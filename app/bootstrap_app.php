@@ -50,66 +50,23 @@ if (SILEX_DEBUG) {
  */
 $app = new Application();
 
-/*
- * define environment variables
- */
+$fs = new Filesystem();
+
+// define default file write mode
+$app['umask'] = 0002;
+$app['file_mode'] = 0775;
+umask($app['umask']);
+
+// define environment variables
 $app['debug'] = (bool) SILEX_DEBUG;
 $app['env'] = SILEX_ENV;
 
-/*
- * define main paths
- */
+// define main paths
 $app['app_dir'] = realpath(__DIR__);
 $app['root_dir'] = realpath($app['app_dir'].DS.'..');
 $app['web_dir'] = $app['root_dir'].DS.'web';
 $app['log_dir'] = $app['app_dir'].DS.'logs';
 $app['cache_dir'] = $app['app_dir'].DS.'cache';
-
-// get configs
-// TODO refactoring
-$fs = new Filesystem();
-
-$configFiles = array(
-    'config',
-    'config_'.$app['env'],
-);
-
-$config = array();
-foreach ($configFiles as $configFile) {
-    $conf = array();
-    if (!$fs->exists($app['cache_dir'].DS.'config'.DS.$configFile.'.php')) {
-        if ($fs->exists($app['app_dir'].DS.'config'.DS.$configFile.'.php')) {
-            $conf = require_once $app['app_dir'].DS.'config'.DS.$configFile.'.php';
-            $rights = isset($conf['cache_access']) && is_int($conf['cache_access']) ? $conf['cache_access'] : 0775;
-            
-            $fs->copy(
-                $app['app_dir'].DS.'config'.DS.$configFile.'.php', 
-                $app['cache_dir'].DS.'config'.DS.$configFile.'.php'
-            );
-            $fs->chmod($app['cache_dir'].DS.'config'.DS.$configFile.'.php', $rights);
-            
-        } elseif ($fs->exists($app['app_dir'].DS.'config'.DS.$configFile.'.yml')) {
-            try {
-                $conf = Yaml::parse($app['app_dir'].DS.'config'.DS.$configFile.'.yml');
-                $rights = isset($conf['cache_access']) && is_int($conf['cache_access']) ? $conf['cache_access'] : 0775;
-                
-                $fs->dumpFile($app['cache_dir'].DS.'config'.DS.$configFile.'.php', '<?php
-return '.var_export($conf, true).';', $rights);
-                
-            } catch (ParseException $e) {
-                throw new ErrorException(sprintf("Unable to parse the YAML string: %s in config file", $e->getMessage()));
-//                exit(1);
-            }
-        }
-    } else {
-        $conf = require_once $app['cache_dir'].DS.'config'.DS.$configFile.'.php';
-    }
-    $config = array_replace_recursive($config, $conf);
-}
-
-//set umask
-$umask = isset($config['umask']) && is_int($config['umask']) ? $config['umask'] : 0002;
-umask($umask);
 
 //create cache directories
 $cacheDirectories = array(
@@ -121,10 +78,49 @@ $cacheDirectories = array(
 );
 
 if (!$fs->exists($cacheDirectories)) {
-    $rights = isset($config['cache_access']) && is_int($config['cache_access']) ? $config['cache_access'] : 0775;
-    $fs->mkdir($cacheDirectories, $rights);
-    foreach ($cacheDirectories as $dir) {
-        $fs->chmod($dir, $rights);
+    $fs->mkdir($cacheDirectories, $app['file_mode']);
+}
+
+foreach ($cacheDirectories as $dir) {
+    $fs->chmod($dir, $app['file_mode']);
+}
+
+// get configs
+$configFiles = array(
+    'config',
+    'config_'.$app['env'],
+);
+
+$configFormats = array(
+    'php',
+//    'ini',
+//    'json',
+    'yml',
+//    'xml',
+);
+
+$app->register(
+    new \Herrera\Wise\WiseServiceProvider(),
+    array(
+        'wise.path' => $app['app_dir'].DS.'config',
+        'wise.cache_dir' => $app['cache_dir'].DS.'config',
+        'wise.options' => array(
+            'parameters' => $app
+        )
+    )
+);
+
+$config = array();
+foreach ($configFiles as $configFile) {
+    $conf = array();
+    foreach ($configFormats as $configFormat) {
+        if ($fs->exists($app['app_dir'].DS.'config'.DS.$configFile.'.'.$configFormat)) {
+            $conf = $app['wise']->load($configFile.'.'.$configFormat);
+        }
+    }
+    
+    if (!empty($conf)) {
+        $config = array_replace_recursive($config, $conf);
     }
 }
 

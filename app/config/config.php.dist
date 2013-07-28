@@ -25,6 +25,4 @@ return array(
         ),
     ),
     'locale_fallback' => 'fr',
-    'umask' => 0000,
-    'cache_access' => 0777,
 );

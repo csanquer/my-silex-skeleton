@@ -22,6 +22,3 @@ locale_fallback: fr
 twig:
     variables:
         foo: bar
-
-umask: 0000
-cache_access: 0777
