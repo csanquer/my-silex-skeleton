@@ -6,6 +6,12 @@
             "email": "charles.sanquer@gmail.com"
         }
     ],
+    "repositories": [
+        {
+            "type": "vcs",
+            "url": "https://github.com/csanquer/SilexTools.git"
+        }
+    ],
     "license": "MIT",
     "keywords": ["silex", "micro-framework", "architecture", "skeleton"],
     "require": {
@@ -33,7 +39,8 @@
         "symfony/yaml": "~2.3",
         "chh/cache-service-provider": "~1.0",
         "herrera-io/silex-wise": "~1.0",
-        "herrera-io/json": "~1.0"
+        "herrera-io/json": "~1.0",
+        "csanquer/silex-tools": "dev-master"
     },
     "autoload": {
         "psr-0": { "": "src/" }
