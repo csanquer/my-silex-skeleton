@@ -1,5 +1,6 @@
 {
     "name": "csanquer/my-silex-skeleton",
+    "description": "my symfony2-like silex application skeleton",
     "authors": [
         {
             "name": "Charles Sanquer",
