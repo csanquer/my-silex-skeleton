@@ -1,5 +1,6 @@
 <?php
 
+use Herrera\Wise\WiseServiceProvider;
 use Silex\Application;
 use Silex\Provider\DoctrineServiceProvider;
 use Silex\Provider\FormServiceProvider;
@@ -13,11 +14,14 @@ use Silex\Provider\UrlGeneratorServiceProvider;
 use Silex\Provider\ValidatorServiceProvider;
 use Silex\Provider\WebProfilerServiceProvider;
 use Symfony\Component\ClassLoader\DebugClassLoader;
-use Symfony\Component\CssSelector\Exception\ParseException;
 use Symfony\Component\Filesystem\Filesystem;
-use Symfony\Component\HttpKernel\Debug\ErrorHandler;
-use Symfony\Component\HttpKernel\Debug\ExceptionHandler;
-use Symfony\Component\Yaml\Yaml;
+use Symfony\Component\Debug\ErrorHandler;
+use Symfony\Component\Debug\ExceptionHandler;
+use Symfony\Component\Translation\Loader\MoFileLoader;
+use Symfony\Component\Translation\Loader\PhpFileLoader;
+use Symfony\Component\Translation\Loader\PoFileLoader;
+use Symfony\Component\Translation\Loader\XliffFileLoader;
+use Symfony\Component\Translation\Loader\YamlFileLoader;
 
 // get environment constants or set default
 if (!defined('DS')) {
@@ -67,6 +71,7 @@ $app['root_dir'] = realpath($app['app_dir'].DS.'..');
 $app['web_dir'] = $app['root_dir'].DS.'web';
 $app['log_dir'] = $app['app_dir'].DS.'logs';
 $app['cache_dir'] = $app['app_dir'].DS.'cache';
+$app['translations_dir'] = $app['app_dir'].DS.'translations';
 
 //create cache directories
 $cacheDirectories = array(
@@ -100,7 +105,7 @@ $configFormats = array(
 );
 
 $app->register(
-    new \Herrera\Wise\WiseServiceProvider(),
+    new WiseServiceProvider(),
     array(
         'wise.path' => $app['app_dir'].DS.'config',
         'wise.cache_dir' => $app['cache_dir'].DS.'config',
@@ -152,12 +157,58 @@ $app->register(new FormServiceProvider(), array(
 
 //add symfony2 translation (needed for twig + forms)
 $app->register(new TranslationServiceProvider(), array(
-    'locale_fallback' => empty($config['locale_fallback']) ? 'en' : $config['locale_fallback'],
+    'locale_fallback' => empty($config['i18n']['locale_fallback']) ? 'en' : $config['i18n']['locale_fallback'],
 ));
+
+// add translation files
+$app['translator'] = $app->share($app->extend('translator', function($translator, $app) use ($config, $fs) {
+    $usedExt = array();
+    
+    $finder = new \Symfony\Component\Finder\Finder();
+    $finder->files()->in($app['translations_dir']);
+    
+    foreach ($finder as $file) {
+        if (preg_match('/^(.+)\.([^\.]+)\.$/', $file->getBasename($file->getExtension()), $matches)) {
+            if (!in_array($file->getExtension(), $usedExt)) {
+                $usedExt[] = $file->getExtension();
+                $loader = null;
+                
+                switch ($file->getExtension()) {
+                    case 'yml':
+                        $loader = new YamlFileLoader();
+                        break;
+                    case 'php':
+                        $loader = new PhpFileLoader();
+                        break;
+                    case 'mo':
+                        $loader = new MoFileLoader();
+                        break;
+                    case 'po':
+                        $loader = new PoFileLoader();
+                        break;
+                    case 'xliff':
+                    default:
+                        $loader = new XliffFileLoader();
+                        break;
+                }
+
+                if (isset($loader)) {
+                    $translator->addLoader($file->getExtension(), $loader);
+                }
+            }
+
+            $translator->addResource($file->getExtension(), $file->getRealPath(), $matches[2], $matches[1]);
+        }
+    }
+    
+    return $translator;
+}));
 
 // add twig templating
 $app->register(new TwigServiceProvider(), array(
-    'twig.path' => __DIR__.'/views',
+    'twig.path' => array(
+        __DIR__.'/views',
+    ),
 //        'twig.templates' => array(),
     'twig.options' => array(
         'debug' => $app['debug'],
@@ -181,6 +232,62 @@ $app['twig'] = $app->share($app->extend('twig', function($twig, $app) use ($conf
     return $twig;
 }));
 
+// add Assetic
+$app->register(new SilexAssetic\AsseticServiceProvider());
+
+$app['assetic.path_to_web'] = $app['web_dir'];
+$app['assetic.options'] = array(
+    'debug' => $app['debug'],
+    'auto_dump_assets' => true,
+);
+
+$app['assetic.filter_manager'] = $app->share(
+    $app->extend('assetic.filter_manager', function($fm, $app) {
+        $fm->set('lessphp', new Assetic\Filter\LessphpFilter());
+        $fm->set('cssrewrite', new Assetic\Filter\CssRewriteFilter());
+        $fm->set('cssmin', new Assetic\Filter\CssMinFilter());
+        $fm->set('jsmin', new Assetic\Filter\JSMinFilter());
+        
+        return $fm;
+    })
+);
+
+/**
+$app['assetic.asset_manager'] = $app->share(
+    $app->extend('assetic.asset_manager', function($am, $app) {
+        $am->set('styles', new Assetic\Asset\AssetCache(
+            new \Assetic\Asset\AssetCollection(
+                array(
+                    new Assetic\Asset\GlobAsset(
+                        $app['web_dir'].'/css/*.less',
+                        array($app['assetic.filter_manager']->get('lessphp'))
+                    ),
+                    new Assetic\Asset\GlobAsset(
+                        $app['web_dir'].'/css/*.css'
+                    ),
+                ),
+                array(
+                    $app['assetic.filter_manager']->get('cssrewrite'),
+                    $app['assetic.filter_manager']->get('cssmin'),
+                )
+            ),
+            new Assetic\Cache\FilesystemCache($app['cache_dir'].DS.'assetic')
+        ));
+        $am->get('styles')->setTargetPath('compiled/css/main.css');
+
+        $am->set('scripts', new Assetic\Asset\AssetCache(
+            new Assetic\Asset\GlobAsset(
+                $app['web_dir'].'/js/*.js',
+                array($app['assetic.filter_manager']->get('jsmin'))
+            ),
+            new Assetic\Cache\FilesystemCache($app['cache_dir'].DS.'assetic')
+        ));
+        $am->get('scripts')->setTargetPath('compiled/js/main.js');
+        
+        return $am;
+    })
+);
+/**/
 //add swiftmailer 
 if (!empty($config['swiftmailer'])) {
     $app->register(new SwiftmailerServiceProvider(), array(

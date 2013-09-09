@@ -6,3 +6,5 @@ app/config/config.php
 bin
 composer.phar
 composer.lock
+phpunit.xml
+web/compiled

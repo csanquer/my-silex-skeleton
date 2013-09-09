@@ -7,10 +7,6 @@
         }
     ],
     "repositories": [
-        {
-            "type": "vcs",
-            "url": "https://github.com/csanquer/SilexTools.git"
-        }
     ],
     "license": "MIT",
     "keywords": ["silex", "micro-framework", "architecture", "skeleton"],
@@ -37,10 +33,15 @@
         "symfony/validator": "~2.3",
         "symfony/security": "~2.3",
         "symfony/yaml": "~2.3",
+        "mheap/Silex-Assetic": "*",
+        "leafo/lessphp": "~0.4",
+        "natxet/CssMin": "dev-master",
+        "mrclay/minify": "~2.1",
         "chh/cache-service-provider": "~1.0",
         "herrera-io/silex-wise": "~1.0",
         "herrera-io/json": "~1.0",
-        "csanquer/silex-tools": "dev-master"
+        "csanquer/silex-tools": "~0.1",
+        "csanquer/pdo-service-provider": "~0.1"
     },
     "autoload": {
         "psr-0": { "": "src/" }

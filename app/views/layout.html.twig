@@ -3,8 +3,23 @@
     <head>
         <title>{% block title '' %} - My Silex Application</title>
 
-        <link href="{{ app.request.basepath }}/css/main.css" rel="stylesheet" type="text/css" />
-
+        {% stylesheets 
+            'css/normalize.css'
+            'css/main.less'
+            filter='lessphp,cssrewrite,?cssmin' 
+            output='compiled/css/main.css'
+        %}
+            <link rel="stylesheet" href="{{ asset_url }}" />
+        {% endstylesheets %}
+            
+        {% javascripts 
+            'js/main.js'
+            filter="?jsmin" 
+            output='compiled/js/main.js' 
+        %}
+            <script src="{{ asset_url }}"></script>
+        {% endjavascripts %}
+            
         <script type="text/javascript">
             var _gaq = _gaq || [];
             _gaq.push(['_setAccount', 'UA-XXXXXXXX-X']);
