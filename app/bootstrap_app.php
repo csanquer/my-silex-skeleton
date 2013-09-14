@@ -152,7 +152,7 @@ $app->register(new ServiceControllerServiceProvider());
 
 //symfony2 form provider, must be registered before twig
 $app->register(new FormServiceProvider(), array(
-    'form.secret' => '4fws6dg4w6df4<qg4sh4646qfgsd4',
+    'form.secret' => $config['form_secret'],
 ));
 
 //add symfony2 translation (needed for twig + forms)

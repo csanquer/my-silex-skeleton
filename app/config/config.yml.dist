@@ -1,4 +1,4 @@
-# For performace reasons prefe using config.php
+# For performance reasons prefer using config.php
 doctrine:
     driver: pdo_mysql
     host: localhost
@@ -17,8 +17,20 @@ swiftmailer:
         encryption:
         auth_mode:
 
-locale_fallback: fr
+form_secret: 4fws6dg4w6df4<qg4sh4646qfgsd4
+
+i18n:
+  locale_fallback: fr
+  languages: 
+    - fr
+    - en
+  formats: 
+    - yml
+#   - xliff
+  domains:
+    - messages
+    - validators
 
 twig:
     variables:
-        foo: bar
+#        foo: bar

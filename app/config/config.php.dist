@@ -19,10 +19,25 @@ return array(
             'auth_mode' => null,
         ),
     ),
-    'twig' => array(
-        'variables' => array(
-            'foo' => 'bar',
+    'form_secret' => '4fws6dg4w6df4<qg4sh4646qfgsd4',
+    'i18n' => array(
+        'locale_fallback' => 'fr',
+        'languages' => array(
+            'fr',
+            'en',
+        ),
+        'formats'=> array(
+            'yml',
+//            'xliff',
+        ),
+        'domains' => array(
+            'messages',
+            'validators',
         ),
     ),
-    'locale_fallback' => 'fr',
+    'twig' => array(
+        'variables' => array(
+//            'foo' => 'bar',
+        ),
+    ),
 );
