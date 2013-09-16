@@ -68,6 +68,7 @@ $app['env'] = SILEX_ENV;
 // define main paths
 $app['app_dir'] = realpath(__DIR__);
 $app['root_dir'] = realpath($app['app_dir'].DS.'..');
+$app['config_dir'] = $app['app_dir'].DS.'config';
 $app['web_dir'] = $app['root_dir'].DS.'web';
 $app['log_dir'] = $app['app_dir'].DS.'logs';
 $app['cache_dir'] = $app['app_dir'].DS.'cache';
@@ -107,7 +108,7 @@ $configFormats = array(
 $app->register(
     new WiseServiceProvider(),
     array(
-        'wise.path' => $app['app_dir'].DS.'config',
+        'wise.path' => $app['config_dir'],
         'wise.cache_dir' => $app['cache_dir'].DS.'config',
         'wise.options' => array(
             'parameters' => $app
@@ -119,7 +120,7 @@ $config = array();
 foreach ($configFiles as $configFile) {
     $conf = array();
     foreach ($configFormats as $configFormat) {
-        if ($fs->exists($app['app_dir'].DS.'config'.DS.$configFile.'.'.$configFormat)) {
+        if ($fs->exists($app['config_dir'].DS.$configFile.'.'.$configFormat)) {
             $conf = $app['wise']->load($configFile.'.'.$configFormat);
         }
     }
