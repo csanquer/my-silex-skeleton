@@ -74,8 +74,9 @@ $app['log_dir'] = $app['app_dir'].DS.'logs';
 $app['cache_dir'] = $app['app_dir'].DS.'cache';
 $app['translations_dir'] = $app['app_dir'].DS.'translations';
 
-//create cache directories
+//create cache and logs directories
 $cacheDirectories = array(
+    $app['log_dir'],
     $app['cache_dir'],
     $app['cache_dir'].DS.'config',
     $app['cache_dir'].DS.'http',
