@@ -1,10 +1,9 @@
 /vendor/
-app/cache
-app/logs
+/var/
 app/config/config.yml
 app/config/config.php
-bin
+/bin/
 composer.phar
 composer.lock
 phpunit.xml
-web/compiled
+/web/compiled

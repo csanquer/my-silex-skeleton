@@ -12,7 +12,7 @@ use Symfony\Component\Console\Input\InputOption;
 use Symfony\Component\Console\Input\ArgvInput;
 
 
-$console = new Application(__DIR__.'/..', 'My Silex Application', 'n/a', 'app');
+$console = new Application($app, __DIR__.'/..', 'Twig Front Dev Application', 'n/a', 'app');
 $console->getDefinition()->addOption(new InputOption('--env', '-e', InputOption::VALUE_REQUIRED, 'The Environment name.', 'dev'));
 $console->getDefinition()->addOption(new InputOption('--no-debug', null, InputOption::VALUE_NONE, 'disabling debug'));
 
@@ -32,5 +32,6 @@ $console->getDefinition()->addOption(new InputOption('--no-debug', null, InputOp
 //$console->add(new MyCommand());
    
 $console->add(new CSanquer\Silex\Tools\Command\CacheClearCommand());
+$console->add(new CSanquer\Silex\Tools\Command\AsseticDumpCommand());
 
 return $console;

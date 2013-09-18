@@ -1,5 +1,10 @@
 <?php
 
+use Assetic\Filter\CssMinFilter;
+use Assetic\Filter\CssRewriteFilter;
+use Assetic\Filter\JSMinFilter;
+use Assetic\Filter\LessphpFilter;
+use Assetic\FilterManager;
 use Herrera\Wise\WiseServiceProvider;
 use Silex\Application;
 use Silex\Provider\DoctrineServiceProvider;
@@ -13,7 +18,9 @@ use Silex\Provider\TwigServiceProvider;
 use Silex\Provider\UrlGeneratorServiceProvider;
 use Silex\Provider\ValidatorServiceProvider;
 use Silex\Provider\WebProfilerServiceProvider;
+use SilexAssetic\AsseticServiceProvider;
 use Symfony\Component\ClassLoader\DebugClassLoader;
+use Symfony\Component\Finder\Finder;
 use Symfony\Component\Filesystem\Filesystem;
 use Symfony\Component\Debug\ErrorHandler;
 use Symfony\Component\Debug\ExceptionHandler;
@@ -68,11 +75,13 @@ $app['env'] = SILEX_ENV;
 // define main paths
 $app['app_dir'] = realpath(__DIR__);
 $app['root_dir'] = realpath($app['app_dir'].DS.'..');
+$app['var_dir'] = $app['root_dir'].DS.'var';
 $app['config_dir'] = $app['app_dir'].DS.'config';
-$app['web_dir'] = $app['root_dir'].DS.'web';
-$app['log_dir'] = $app['app_dir'].DS.'logs';
-$app['cache_dir'] = $app['app_dir'].DS.'cache';
 $app['translations_dir'] = $app['app_dir'].DS.'translations';
+$app['web_dir'] = $app['root_dir'].DS.'web';
+$app['bin_dir'] = $app['root_dir'].DS.'bin';
+$app['log_dir'] = $app['var_dir'].DS.'logs';
+$app['cache_dir'] = $app['var_dir'].DS.'cache';
 
 //create cache and logs directories
 $cacheDirectories = array(
@@ -82,6 +91,8 @@ $cacheDirectories = array(
     $app['cache_dir'].DS.'http',
     $app['cache_dir'].DS.'twig',
     $app['cache_dir'].DS.'profiler',
+    $app['cache_dir'].DS.'assetic'.DS.'formulae',
+    $app['cache_dir'].DS.'assetic'.DS.'twig',
 );
 
 if (!$fs->exists($cacheDirectories)) {
@@ -166,7 +177,7 @@ $app->register(new TranslationServiceProvider(), array(
 $app['translator'] = $app->share($app->extend('translator', function($translator, $app) use ($config, $fs) {
     $usedExt = array();
     
-    $finder = new \Symfony\Component\Finder\Finder();
+    $finder = new Finder();
     $finder->files()->in($app['translations_dir']);
     
     foreach ($finder as $file) {
@@ -215,7 +226,7 @@ $app->register(new TwigServiceProvider(), array(
     'twig.options' => array(
         'debug' => $app['debug'],
         'cache' => $app['cache_dir'].DS.'twig',
-        'auto_reload' => $app['debug'],
+        'auto_reload' => $app['env'] !== 'prod',
     ),
     'twig.form.templates' => array(
         'form_div_layout.html.twig', // Twig SF2 original form theme
@@ -224,14 +235,14 @@ $app->register(new TwigServiceProvider(), array(
 ));
 
 $app['twig'] = $app->share($app->extend('twig', function($twig, $app) use ($config) {
-    // add custom globals, filters, tags, ...
+    // add twig custom globals, filters, tags, ...
     if (!empty($config['twig']['variables'])) {
         foreach ($config['twig']['variables'] as $name => $value) {
             $twig->addGlobal($name, $value);
         }
     }
     
-    // add extensions
+    // add twig extensions
     $twig->addExtension(new Twig_Extensions_Extension_Text());
     
     if (extension_loaded('intl')) {
@@ -242,60 +253,41 @@ $app['twig'] = $app->share($app->extend('twig', function($twig, $app) use ($conf
 }));
 
 // add Assetic
-$app->register(new SilexAssetic\AsseticServiceProvider());
-
-$app['assetic.path_to_web'] = $app['web_dir'];
-$app['assetic.options'] = array(
+$app->register(new AsseticServiceProvider(), array(
+    'assetic.path_to_web' => $app['web_dir'],
+    'assetic.options' => array(
     'debug' => $app['debug'],
     'auto_dump_assets' => true,
-);
+        'formulae_cache_dir' => $app['cache_dir'].DS.'assetic'.DS.'formulae',
+                    ),
+    'assetic.filters' => $app->protect(function(FilterManager $fm) {
+        $fm->set('lessphp', new LessphpFilter());
+        $fm->set('cssrewrite', new CssRewriteFilter());
+        $fm->set('cssmin', new CssMinFilter());
+        $fm->set('jsmin', new JSMinFilter());
+    }),
+        ));
 
-$app['assetic.filter_manager'] = $app->share(
-    $app->extend('assetic.filter_manager', function($fm, $app) {
-        $fm->set('lessphp', new Assetic\Filter\LessphpFilter());
-        $fm->set('cssrewrite', new Assetic\Filter\CssRewriteFilter());
-        $fm->set('cssmin', new Assetic\Filter\CssMinFilter());
-        $fm->set('jsmin', new Assetic\Filter\JSMinFilter());
+$app['assetic.lazy_asset_manager'] = $app->share(
+    $app->extend('assetic.lazy_asset_manager', function (Assetic\Factory\LazyAssetManager $am, $app) {
+        $am->setLoader('twig', new Assetic\Factory\Loader\CachedFormulaLoader(
+            new Assetic\Extension\Twig\TwigFormulaLoader($app['twig']), 
+            new Assetic\Cache\ConfigCache($app['cache_dir'].DS.'assetic'.DS.'twig')
+        ));
         
-        return $fm;
-    })
-);
-
-/**
-$app['assetic.asset_manager'] = $app->share(
-    $app->extend('assetic.asset_manager', function($am, $app) {
-        $am->set('styles', new Assetic\Asset\AssetCache(
-            new \Assetic\Asset\AssetCollection(
-                array(
-                    new Assetic\Asset\GlobAsset(
-                        $app['web_dir'].'/css/*.less',
-                        array($app['assetic.filter_manager']->get('lessphp'))
-                    ),
-                    new Assetic\Asset\GlobAsset(
-                        $app['web_dir'].'/css/*.css'
-                    ),
-                ),
-                array(
-                    $app['assetic.filter_manager']->get('cssrewrite'),
-                    $app['assetic.filter_manager']->get('cssmin'),
-                )
-            ),
-            new Assetic\Cache\FilesystemCache($app['cache_dir'].DS.'assetic')
-        ));
-        $am->get('styles')->setTargetPath('compiled/css/main.css');
-
-        $am->set('scripts', new Assetic\Asset\AssetCache(
-            new Assetic\Asset\GlobAsset(
-                $app['web_dir'].'/js/*.js',
-                array($app['assetic.filter_manager']->get('jsmin'))
-            ),
-            new Assetic\Cache\FilesystemCache($app['cache_dir'].DS.'assetic')
-        ));
-        $am->get('scripts')->setTargetPath('compiled/js/main.js');
+        if ($app['assetic.options']['formulae_cache_dir'] !== null && $app['assetic.options']['debug'] !== true) {
+            foreach ($am->getNames() as $name) {
+                $am->set($name, new \Assetic\Asset\AssetCache(
+                    $am->get($name),
+                    new \Assetic\Cache\FilesystemCache($app['assetic.options']['formulae_cache_dir'])
+                ));
+            }
+        }
         
         return $am;
     })
-);
+);  
+    
 /**/
 //add swiftmailer 
 if (!empty($config['swiftmailer'])) {

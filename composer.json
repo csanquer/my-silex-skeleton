@@ -41,7 +41,7 @@
         "chh/cache-service-provider": "~1.0",
         "herrera-io/silex-wise": "~1.0",
         "herrera-io/json": "~1.0",
-        "csanquer/silex-tools": "~0.1",
+        "csanquer/silex-tools": "~0.2",
         "csanquer/pdo-service-provider": "~0.1"
     },
     "autoload": {

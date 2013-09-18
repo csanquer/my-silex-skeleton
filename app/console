@@ -20,6 +20,7 @@ define('SILEX_DEBUG', !$input->hasParameterOption(array('--no-debug')));
  * @var \Silex\Application Silex application
  */
 $app = require_once __DIR__.DS.'bootstrap_app.php';
+$app->boot();
 
 /**
  * @var \Symfony\Component\Console\Application Console application
