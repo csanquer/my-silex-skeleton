@@ -5,6 +5,10 @@ if (!defined('DS')) {
     define('DS', DIRECTORY_SEPARATOR);
 }
 
+if (!defined('UMASK')) {
+    define('UMASK', 0002);
+}
+
 require_once __DIR__.DS.'..'.DS.'vendor'.DS.'autoload.php';
 
 /**

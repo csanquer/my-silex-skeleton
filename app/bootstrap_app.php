@@ -43,6 +43,10 @@ if (!defined('SILEX_DEBUG')) {
     define('SILEX_DEBUG', true);
 }
 
+if (!defined('UMASK')) {
+    define('UMASK', 0002);
+}
+
 //Debugging
 if (SILEX_DEBUG) {
     error_reporting(-1);
@@ -65,7 +69,7 @@ $fs = new Filesystem();
 
 // define default file write mode
 $app['umask'] = 0002;
-$app['file_mode'] = 0775;
+$app['file_mode'] = 0777-$app['umask'];
 umask($app['umask']);
 
 // define environment variables

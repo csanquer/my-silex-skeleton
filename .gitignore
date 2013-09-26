@@ -1,7 +1,9 @@
 /vendor/
 /var/
-app/config/config.yml
-app/config/config.php
+/app/config/config.yml
+/app/config/config.php
+/app/cache/
+/app/logs/
 /bin/
 composer.phar
 composer.lock
