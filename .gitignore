@@ -2,6 +2,8 @@
 /var/
 /app/config/config.yml
 /app/config/config.php
+/app/config/parameters.yml
+/app/config/parameters.php
 /app/cache/
 /app/logs/
 /bin/
@@ -9,3 +11,4 @@ composer.phar
 composer.lock
 phpunit.xml
 /web/compiled
+

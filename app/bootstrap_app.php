@@ -109,8 +109,8 @@ foreach ($cacheDirectories as $dir) {
 
 // get configs
 $configFiles = array(
-    'config',
-    'config_'.$app['env'],
+    'parameters',
+    'parameters_'.$app['env'],
 );
 
 $configFormats = array(
@@ -132,7 +132,7 @@ $app->register(
     )
 );
 
-$config = array();
+$rawConfig = array();
 foreach ($configFiles as $configFile) {
     $conf = array();
     foreach ($configFormats as $configFormat) {
@@ -142,9 +142,11 @@ foreach ($configFiles as $configFile) {
     }
     
     if (!empty($conf)) {
-        $config = array_replace_recursive($config, $conf);
+        $rawConfig = array_replace_recursive($rawConfig, $conf);
     }
 }
+
+$config = $rawConfig['parameters'];
 
 /*
  * add service providers
@@ -174,7 +176,7 @@ $app->register(new FormServiceProvider(), array(
 
 //add symfony2 translation (needed for twig + forms)
 $app->register(new TranslationServiceProvider(), array(
-    'locale_fallback' => empty($config['i18n']['locale_fallback']) ? 'en' : $config['i18n']['locale_fallback'],
+    'locale_fallback' => empty($config['i18n.locale_fallback']) ? 'en' : $config['i18n.locale_fallback'],
 ));
 
 // add translation files
@@ -240,8 +242,9 @@ $app->register(new TwigServiceProvider(), array(
 
 $app['twig'] = $app->share($app->extend('twig', function($twig, $app) use ($config) {
     // add twig custom globals, filters, tags, ...
-    if (!empty($config['twig']['variables'])) {
-        foreach ($config['twig']['variables'] as $name => $value) {
+    if (!empty($config['twig.variables'])) {
+        foreach ($config['twig.variables'] as $name => $value) {
+            var_dump($name, $value);
             $twig->addGlobal($name, $value);
         }
     }
@@ -294,12 +297,27 @@ $app['assetic.lazy_asset_manager'] = $app->share(
     
 /**/
 //add swiftmailer 
-if (!empty($config['swiftmailer'])) {
+if (!empty($config['swiftmailer.transport'])) {
+    $swiftmailerOptions = array(
+        'host'       => 'localhost',
+        'port'       => 25,
+        'username'   => '',
+        'password'   => '',
+        'encryption' => null,
+        'auth_mode'  => null,
+    );
+    
+    foreach ($swiftmailerOptions as $key => $value) {
+        if (isset($config['swiftmailer.'.$key])) {
+            $swiftmailerOptions[$key] = $config['swiftmailer.'.$key];
+        }
+    }
+    
     $app->register(new SwiftmailerServiceProvider(), array(
-        'swiftmailer.options' => isset($config['swiftmailer']['options']) ? $config['swiftmailer']['options'] : array(),
+        'swiftmailer.options' => $swiftmailerOptions,
     ));
     // custom swiftmailer transport
-    $swiftTransport = in_array($config['swiftmailer']['transport'], array('mail', 'sendmail', 'smtp')) ? $config['swiftmailer']['transport'] : 'smtp';
+    $swiftTransport = in_array($config['swiftmailer.transport'], array('mail', 'sendmail', 'smtp')) ? $config['swiftmailer.transport'] : 'smtp';
     switch ($swiftTransport) {
         case 'mail':
             $app['swiftmailer.transport'] = new \Swift_MailTransport();
@@ -314,9 +332,24 @@ if (!empty($config['swiftmailer'])) {
 }
 
 //Database Doctrine DBAL Connection
-if (!empty($config['doctrine'])) {
+if (!empty($config['doctrine.driver'])) {
+    $doctrineOptions = array(
+        'driver' => '',
+        'host' => '',
+        'port' => null,
+        'dbname' => '',
+        'user' => '',
+        'password' => null,
+    );
+    
+    foreach ($doctrineOptions as $key => $value) {
+        if (isset($config['doctrine.'.$key])) {
+            $doctrineOptions[$key] = $config['doctrine.'.$key];
+        }
+    }
+    
     $app->register(new DoctrineServiceProvider(), array(
-        'db.options' => is_array($config['doctrine']) ? $config['doctrine'] : array(),
+        'db.options' => $doctrineOptions,
     ));
 }
 

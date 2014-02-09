@@ -15,7 +15,7 @@
         "php": ">=5.3.3",
         "silex/silex": "~1.1",
         "silex/web-profiler": "~1.0",
-        "swiftmailer/swiftmailer": "~4.3",
+        "swiftmailer/swiftmailer": "~5.0",
         "symfony/browser-kit": "~2.3",
         "symfony/class-loader": "~2.3",
         "symfony/config": "~2.3",
@@ -35,11 +35,12 @@
         "symfony/security": "~2.3",
         "symfony/yaml": "~2.3",
         "mheap/Silex-Assetic": "*",
+        "incenteev/composer-parameter-handler": "~2.1",
         "leafo/lessphp": "~0.4",
         "natxet/CssMin": "dev-master",
         "mrclay/minify": "~2.1",
         "chh/cache-service-provider": "~1.0",
-        "herrera-io/silex-wise": "~1.0",
+        "herrera-io/silex-wise": "~2.2",
         "herrera-io/json": "~1.0",
         "csanquer/silex-tools": "~0.2",
         "csanquer/pdo-service-provider": "~0.1"
@@ -49,5 +50,18 @@
     },
     "config": {
         "bin-dir": "bin"
+    },
+    "scripts": {
+        "post-install-cmd": [
+            "Incenteev\\ParameterHandler\\ScriptHandler::buildParameters"
+        ],
+        "post-update-cmd": [
+            "Incenteev\\ParameterHandler\\ScriptHandler::buildParameters"
+        ]
+    },
+    "extra": {
+        "incenteev-parameters": {
+            "file": "app/config/parameters.yml"
+        }
     }
 }

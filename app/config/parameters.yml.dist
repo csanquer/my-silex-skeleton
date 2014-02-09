@@ -1,0 +1,31 @@
+parameters:
+    doctrine.driver: pdo_mysql
+    doctrine.host: localhost
+    doctrine.port: 3306
+    doctrine.dbname: silex_sandbox
+    doctrine.user: root
+    doctrine.password:
+
+    swiftmailer.transport: sendmail
+    swiftmailer.host:
+    swiftmailer.port:
+    swiftmailer.username:
+    swiftmailer.password:
+    swiftmailer.encryption:
+    swiftmailer.auth_mode:
+
+    form_secret: 4fws6dg4w6df4<qg4sh4646qfgsd4
+
+    i18n.locale_fallback: fr
+    i18n.languages: 
+        - fr
+        - en
+    i18n.formats: 
+        - yml
+    #   - xliff
+    i18n.domains:
+        - messages
+        - validators
+
+    twig.variables:
+        foo: bar
