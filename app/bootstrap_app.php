@@ -68,7 +68,7 @@ $app = new Application();
 $fs = new Filesystem();
 
 // define default file write mode
-$app['umask'] = 0002;
+$app['umask'] = UMASK;
 $app['file_mode'] = 0777-$app['umask'];
 umask($app['umask']);
 
