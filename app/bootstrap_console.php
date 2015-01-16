@@ -1,20 +1,13 @@
 <?php
 
-if (!defined('DS')) {
-    define('DS', DIRECTORY_SEPARATOR);
-}
-
-use CSanquer\Silex\Tools\Application;
+use CSanquer\Silex\Tools\ConsoleApplication;
 use Symfony\Component\Console\Input\InputInterface;
 use Symfony\Component\Console\Output\OutputInterface;
 use Symfony\Component\Console\Input\InputArgument;
 use Symfony\Component\Console\Input\InputOption;
 use Symfony\Component\Console\Input\ArgvInput;
 
-
-$console = new Application($app, __DIR__.'/..', 'Twig Front Dev Application', 'n/a', 'app');
-$console->getDefinition()->addOption(new InputOption('--env', '-e', InputOption::VALUE_REQUIRED, 'The Environment name.', 'dev'));
-$console->getDefinition()->addOption(new InputOption('--no-debug', null, InputOption::VALUE_NONE, 'disabling debug'));
+$console = new ConsoleApplication($app, 'Silex Application', 'n/a');
 
 // register commands to the application
 //$console

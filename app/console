@@ -2,17 +2,13 @@
 <?php
 
 // get environment constants or set default
-if (!defined('DS')) {
-    define('DS', DIRECTORY_SEPARATOR);
-}
-
 if (!defined('UMASK')) {
     define('UMASK', 0002);
 }
 
 set_time_limit(0);
 
-require_once __DIR__.DS.'..'.DS.'vendor'.DS.'autoload.php';
+require_once __DIR__.'/../vendor/autoload.php';
 
 use Symfony\Component\Console\Input\ArgvInput;
 
@@ -23,11 +19,11 @@ define('SILEX_DEBUG', !$input->hasParameterOption(array('--no-debug')));
 /**
  * @var \Silex\Application Silex application
  */
-$app = require_once __DIR__.DS.'bootstrap_app.php';
+$app = require_once __DIR__.'/bootstrap_app.php';
 $app->boot();
 
 /**
  * @var \Symfony\Component\Console\Application Console application
  */
-$console = require __DIR__.DS.'bootstrap_console.php';
+$console = require_once __DIR__.'/bootstrap_console.php';
 $console->run();

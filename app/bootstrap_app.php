@@ -19,7 +19,7 @@ use Silex\Provider\UrlGeneratorServiceProvider;
 use Silex\Provider\ValidatorServiceProvider;
 use Silex\Provider\WebProfilerServiceProvider;
 use SilexAssetic\AsseticServiceProvider;
-use Symfony\Component\ClassLoader\DebugClassLoader;
+use Symfony\Component\Debug\DebugClassLoader;
 use Symfony\Component\Finder\Finder;
 use Symfony\Component\Filesystem\Filesystem;
 use Symfony\Component\Debug\ErrorHandler;
@@ -78,25 +78,25 @@ $app['env'] = SILEX_ENV;
 
 // define main paths
 $app['app_dir'] = realpath(__DIR__);
-$app['root_dir'] = realpath($app['app_dir'].DS.'..');
-$app['var_dir'] = $app['root_dir'].DS.'var';
-$app['config_dir'] = $app['app_dir'].DS.'config';
-$app['translations_dir'] = $app['app_dir'].DS.'translations';
-$app['web_dir'] = $app['root_dir'].DS.'web';
-$app['bin_dir'] = $app['root_dir'].DS.'bin';
-$app['log_dir'] = $app['var_dir'].DS.'logs';
-$app['cache_dir'] = $app['var_dir'].DS.'cache';
+$app['root_dir'] = realpath($app['app_dir'].'/..');
+$app['var_dir'] = $app['root_dir'].'/var';
+$app['config_dir'] = $app['app_dir'].'/config';
+$app['translations_dir'] = $app['app_dir'].'/translations';
+$app['web_dir'] = $app['root_dir'].'/web';
+$app['bin_dir'] = $app['root_dir'].'/bin';
+$app['log_dir'] = $app['var_dir'].'/logs';
+$app['cache_dir'] = $app['var_dir'].'/cache';
 
 //create cache and logs directories
 $cacheDirectories = array(
     $app['log_dir'],
     $app['cache_dir'],
-    $app['cache_dir'].DS.'config',
-    $app['cache_dir'].DS.'http',
-    $app['cache_dir'].DS.'twig',
-    $app['cache_dir'].DS.'profiler',
-    $app['cache_dir'].DS.'assetic'.DS.'formulae',
-    $app['cache_dir'].DS.'assetic'.DS.'twig',
+    $app['cache_dir'].'/config',
+    $app['cache_dir'].'/http',
+    $app['cache_dir'].'/twig',
+    $app['cache_dir'].'/profiler',
+    $app['cache_dir'].'/assetic/formulae',
+    $app['cache_dir'].'/assetic/twig',
 );
 
 if (!$fs->exists($cacheDirectories)) {
@@ -125,7 +125,7 @@ $app->register(
     new WiseServiceProvider(),
     array(
         'wise.path' => $app['config_dir'],
-        'wise.cache_dir' => $app['cache_dir'].DS.'config',
+        'wise.cache_dir' => $app['cache_dir'].'/config',
         'wise.options' => array(
             'parameters' => $app
         )
@@ -154,7 +154,7 @@ $config = $rawConfig['parameters'];
 
 //add http cache
 //$app->register(new Silex\Provider\HttpCacheServiceProvider(), array(
-//    'http_cache.cache_dir' => $app['cache_dir'].DS.'http',
+//    'http_cache.cache_dir' => $app['cache_dir'].'/http',
 //));
 
 //add url generator
@@ -231,7 +231,7 @@ $app->register(new TwigServiceProvider(), array(
 //        'twig.templates' => array(),
     'twig.options' => array(
         'debug' => $app['debug'],
-        'cache' => $app['cache_dir'].DS.'twig',
+        'cache' => $app['cache_dir'].'/twig',
         'auto_reload' => $app['env'] !== 'prod',
     ),
     'twig.form.templates' => array(
@@ -244,7 +244,6 @@ $app['twig'] = $app->share($app->extend('twig', function($twig, $app) use ($conf
     // add twig custom globals, filters, tags, ...
     if (!empty($config['twig.variables'])) {
         foreach ($config['twig.variables'] as $name => $value) {
-            var_dump($name, $value);
             $twig->addGlobal($name, $value);
         }
     }
@@ -265,7 +264,7 @@ $app->register(new AsseticServiceProvider(), array(
     'assetic.options' => array(
     'debug' => $app['debug'],
     'auto_dump_assets' => true,
-        'formulae_cache_dir' => $app['cache_dir'].DS.'assetic'.DS.'formulae',
+        'formulae_cache_dir' => $app['cache_dir'].'/assetic/formulae',
                     ),
     'assetic.filters' => $app->protect(function(FilterManager $fm) {
         $fm->set('lessphp', new LessphpFilter());
@@ -279,7 +278,7 @@ $app['assetic.lazy_asset_manager'] = $app->share(
     $app->extend('assetic.lazy_asset_manager', function (Assetic\Factory\LazyAssetManager $am, $app) {
         $am->setLoader('twig', new Assetic\Factory\Loader\CachedFormulaLoader(
             new Assetic\Extension\Twig\TwigFormulaLoader($app['twig']), 
-            new Assetic\Cache\ConfigCache($app['cache_dir'].DS.'assetic'.DS.'twig')
+            new Assetic\Cache\ConfigCache($app['cache_dir'].'/assetic/twig')
         ));
         
         if ($app['assetic.options']['formulae_cache_dir'] !== null && $app['assetic.options']['debug'] !== true) {
@@ -356,12 +355,12 @@ if (!empty($config['doctrine.driver'])) {
 if ('dev' == SILEX_ENV) {
     // logs
     $app->register(new MonologServiceProvider(), array(
-        'monolog.logfile' => $app['log_dir'].DS.'silex_dev.log',
+        'monolog.logfile' => $app['log_dir'].'/silex_dev.log',
     ));
 
     // symfony2 web profier
     $app->register($p = new WebProfilerServiceProvider(), array(
-        'profiler.cache_dir' => $app['cache_dir'].DS.'profiler',
+        'profiler.cache_dir' => $app['cache_dir'].'/profiler',
     ));
 
     $app->mount('/_profiler', $p);
